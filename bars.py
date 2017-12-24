@@ -49,7 +49,7 @@ def max_min_seats_count(json_data, func_max_min):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
+    if len(sys.argv) > 3:
         try:
             json_data = load_data(sys.argv[1])
         except (FileNotFoundError, ValueError) as e:
