@@ -5,11 +5,7 @@ import sys
 
 def load_data(filepath):
     with open(filepath, encoding='utf-8') as json_data:
-        try:
-            json_data = json.load(json_data)
-        except ValueError as e:
-            print("Не удалось прочитать JSON-файл", e)
-            return
+        json_data = json.load(json_data)
         return json_data
 
 
@@ -54,9 +50,13 @@ def max_min_seats_count(json_data, func_max_min):
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
-        json_data = load_data(sys.argv[1])
-        print("Самый большой бар: " + get_biggest_bar(json_data))
-        print("Самый маленький бар " + get_smallest_bar(json_data))
-        print("Самый близкий бар: " +
-              get_closest_bar(json_data, float(sys.argv[2]),
-                              float(sys.argv[3])))
+        try:
+            json_data = load_data(sys.argv[1])
+        except (FileNotFoundError, ValueError) as e:
+            print("Не удалось прочитать JSON-файл", e)
+        else:
+            print("Самый большой бар: " + get_biggest_bar(json_data))
+            print("Самый маленький бар: " + get_smallest_bar(json_data))
+            print("Самый близкий бар: " +
+                  get_closest_bar(json_data, float(sys.argv[2]),
+                                  float(sys.argv[3])))
