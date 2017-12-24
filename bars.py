@@ -1,62 +1,72 @@
 import json
 import math
-import sys
+import argparse
 
 
 def load_data(filepath):
-    with open(filepath, encoding='utf-8') as json_data:
-        json_data = json.load(json_data)
+    with open(filepath, encoding='utf-8') as json_file:
+        json_data = json.load(json_file)
         return json_data
 
 
-def get_biggest_bar(json_data):
-    return max_min_seats_count(json_data, max)
+def get_biggest_bar(bars):
+    return max_min_seats_count(bars, max)
 
 
-def get_smallest_bar(json_data):
-    return max_min_seats_count(json_data, min)
+def get_smallest_bar(bars):
+    return max_min_seats_count(bars, min)
 
 
-def get_closest_bar(json_data, longitude, latitude):
-    bars_coordinates = [[feature['properties']['Attributes']['Name'],
-                         feature['geometry']['coordinates']]
-                        for feature in json_data['features']]
-    # Найдем расстояния точек
-    bars_coordinates_distances = [
-        [bar[0], bar[1],
-         math.sqrt((bar[1][0]-longitude)**2 + (bar[1][1]-latitude)**2)]
-        for bar in bars_coordinates]
-    distances = [bar[2] for bar in bars_coordinates_distances]
-    min_dist = min(distances)
-    bars_coordinates_min_distances = [bar for bar in bars_coordinates_distances
-                                      if bar[2] == min_dist]
-    return bars_coordinates_min_distances[0][0]
+def get_closest_bar(bars, longitude, latitude):
+    bars_coordinates = [[bar['properties']['Attributes']['Name'],
+                         bar['geometry']['coordinates']]
+                        for bar in bars]
+
+    bars_coordinates_dist = [
+        [bar_coorinates[0], bar_coorinates[1],
+         get_distance_between_points(bar_coorinates, longitude, latitude)]
+        for bar_coorinates in bars_coordinates]
+
+    min_dist = min(bars_coordinates_dist,
+                   key=lambda bars_coordinates_list: bars_coordinates_list[2])
+    return min_dist[0]
 
 
-def max_min_seats_count(json_data, func_max_min):
+def get_distance_between_points(coorinates, longitude, latitude):
+    return math.sqrt(
+        (coorinates[1][0]-longitude)**2 + (coorinates[1][1]-latitude)**2)
+
+
+def max_min_seats_count(bars, func_max_min):
     bars_attributes = [
-        feature['properties']['Attributes']
-        for feature in json_data['features']]
-    # создадим список всех размеров для поиска максимума/минимума
+        bar['properties']['Attributes']
+        for bar in bars]
+
     seats_count = [
-        bar_attributes['SeatsCount']
+        [bar_attributes['Name'], bar_attributes['SeatsCount']]
         for bar_attributes in bars_attributes]
-    biggest_bars = [
-        bar_attributes['Name']
-        for bar_attributes in bars_attributes
-        if bar_attributes['SeatsCount'] == func_max_min(seats_count)]
-    return biggest_bars[0]
+
+    bar_seats_count =\
+        func_max_min(seats_count,
+                     key=lambda list_seats_count: list_seats_count[1])
+    return bar_seats_count[0]
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 3:
-        try:
-            json_data = load_data(sys.argv[1])
-        except (FileNotFoundError, ValueError) as e:
-            print("Не удалось прочитать JSON-файл", e)
-        else:
-            print("Самый большой бар: " + get_biggest_bar(json_data))
-            print("Самый маленький бар: " + get_smallest_bar(json_data))
-            print("Самый близкий бар: " +
-                  get_closest_bar(json_data, float(sys.argv[2]),
-                                  float(sys.argv[3])))
+    parser = argparse.ArgumentParser()
+    parser.add_argument("filepath")
+    parser.add_argument("longitude")
+    parser.add_argument("latitude")
+    args = parser.parse_args()
+
+    try:
+        json_data = load_data(args.filepath)
+        bars = json_data['features']
+    except (FileNotFoundError, ValueError) as e:
+        print("Не удалось прочитать JSON-файл", e)
+    else:
+        print("Самый большой бар: %s" % get_biggest_bar(bars))
+        print("Самый маленький бар: %s" % get_smallest_bar(bars))
+        print("Самый близкий бар: %s" %
+              get_closest_bar(bars, float(args.longitude),
+                              float(args.latitude)))
