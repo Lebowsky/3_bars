@@ -10,54 +10,40 @@ def load_data(filepath):
 
 
 def get_biggest_bar(bars):
-    return max_min_seats_count(bars, max)
+    return max(bars,
+               key=lambda list_bars: list_bars
+               ['properties']['Attributes']['SeatsCount'])
 
 
 def get_smallest_bar(bars):
-    return max_min_seats_count(bars, min)
+    return min(bars,
+               key=lambda list_bars: list_bars
+               ['properties']['Attributes']['SeatsCount'])
 
 
 def get_closest_bar(bars, longitude, latitude):
-    bars_coordinates = [[bar['properties']['Attributes']['Name'],
-                         bar['geometry']['coordinates']]
-                        for bar in bars]
-
-    bars_coordinates_dist = [
-        [bar_coorinates[0], bar_coorinates[1],
-         get_distance_between_points(bar_coorinates, longitude, latitude)]
-        for bar_coorinates in bars_coordinates]
-
-    min_dist = min(bars_coordinates_dist,
-                   key=lambda bars_coordinates_list: bars_coordinates_list[2])
-    return min_dist[0]
+    return min(bars,
+               key=lambda bars_list:
+               get_distance_between_points(bars_list, longitude, latitude))
 
 
-def get_distance_between_points(coorinates, longitude, latitude):
+def get_distance_between_points(bars, longitude, latitude):
     return math.sqrt(
-        (coorinates[1][0]-longitude)**2 + (coorinates[1][1]-latitude)**2)
+        (bars['geometry']['coordinates'][0]-longitude)**2 +
+        (bars['geometry']['coordinates'][1]-latitude)**2)
 
 
-def max_min_seats_count(bars, func_max_min):
-    bars_attributes = [
-        bar['properties']['Attributes']
-        for bar in bars]
-
-    seats_count = [
-        [bar_attributes['Name'], bar_attributes['SeatsCount']]
-        for bar_attributes in bars_attributes]
-
-    bar_seats_count =\
-        func_max_min(seats_count,
-                     key=lambda list_seats_count: list_seats_count[1])
-    return bar_seats_count[0]
+def create_argument_parcer():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("filepath", type=str)
+    parser.add_argument("longitude", type=float)
+    parser.add_argument("latitude", type=float)
+    args = parser.parse_args()
+    return args
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("filepath")
-    parser.add_argument("longitude")
-    parser.add_argument("latitude")
-    args = parser.parse_args()
+    args = create_argument_parcer()
 
     try:
         json_data = load_data(args.filepath)
@@ -65,8 +51,10 @@ if __name__ == '__main__':
     except (FileNotFoundError, ValueError) as e:
         print("Не удалось прочитать JSON-файл", e)
     else:
-        print("Самый большой бар: %s" % get_biggest_bar(bars))
-        print("Самый маленький бар: %s" % get_smallest_bar(bars))
-        print("Самый близкий бар: %s" %
-              get_closest_bar(bars, float(args.longitude),
-                              float(args.latitude)))
+        print("Самый большой бар: {}".format(
+            get_biggest_bar(bars)['properties']['Attributes']['Name']))
+        print("Самый маленький бар: {}".format(
+            get_smallest_bar(bars)['properties']['Attributes']['Name']))
+        print("Самый близкий бар: {}".format(
+              get_closest_bar(bars, float(args.longitude), float(args.latitude))
+              ['properties']['Attributes']['Name']))
