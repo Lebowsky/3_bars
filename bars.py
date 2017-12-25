@@ -11,20 +11,20 @@ def load_data(filepath):
 
 def get_biggest_bar(bars):
     return max(bars,
-               key=lambda list_bars: list_bars
+               key=lambda bar: bar
                ['properties']['Attributes']['SeatsCount'])
 
 
 def get_smallest_bar(bars):
     return min(bars,
-               key=lambda list_bars: list_bars
+               key=lambda bar: bar
                ['properties']['Attributes']['SeatsCount'])
 
 
 def get_closest_bar(bars, longitude, latitude):
     return min(bars,
-               key=lambda bars_list:
-               get_distance_between_points(bars_list, longitude, latitude))
+               key=lambda bar:
+               get_distance_between_points(bar, longitude, latitude))
 
 
 def get_distance_between_points(bars, longitude, latitude):
@@ -56,5 +56,5 @@ if __name__ == '__main__':
         print("Самый маленький бар: {}".format(
             get_smallest_bar(bars)['properties']['Attributes']['Name']))
         print("Самый близкий бар: {}".format(
-              get_closest_bar(bars, float(args.longitude), float(args.latitude))
+              get_closest_bar(bars, args.longitude, args.latitude)
               ['properties']['Attributes']['Name']))
